@@ -1,0 +1,1 @@
+g++ -o run load_bmp.cpp main.cpp shader.cpp -lX11 -lGLU -lGL -lglut -lGLEW

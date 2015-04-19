@@ -1,0 +1,867 @@
+#ifndef __GLEW_INCLUDED__   // if x.h hasn't been included yet...
+#define __GLEW_INCLUDED__   //   #define this so the compiler knows it has been included
+#include <GL/glew.h>
+#include <GL/glext.h>
+#endif
+#ifndef __X_H_INCLUDED__   // if x.h hasn't been included yet...
+#define __X_H_INCLUDED__   //   #define this so the compiler knows it has been included
+#include <GL/gl.h>
+#include <GL/glut.h>
+#include <cstdlib>
+#endif
+#ifndef __MATH_C_INCLUDED__   // if x.h hasn't been included yet...
+#define __MATH_C_INCLUDED__ 
+#include <math.h>
+#endif
+// #include "elementary_brick.h"
+#ifndef __main_object_h
+#define __main_object_h
+#include "main_object.h"
+#endif
+#include "file.h"
+#ifndef _utility_included_
+#define _utility_included_
+#include "utility.h"
+#endif
+#include "constants.h"
+#include "shader.h"
+#include "string.h"
+// #include <iostream>
+// #include "sloping_brick.h"
+using namespace std;
+typedef GLfloat vertex3 [3];
+double rotate_y=0; 
+double rotate_x=0;
+// int debug_mode=0;
+float win_width = 1000;
+float win_height = 1000;
+
+main_object data;	
+
+GLint mouse_x=0;
+GLint mouse_y=0; 
+GLint mouse_z=0;
+GLint neg=1;
+
+int flag_z=0;
+int flag_y=0;
+int flag_x=0;
+
+int buffer[2];
+int counter=0;
+int color_option=0;
+// int is_rotating=-1;
+GLfloat zoom_level=1;
+bool mode=true;
+bool screen_shot=false;
+
+Shader shader,shader1;
+
+void reset_buffer()
+{
+	for(int  i=0;i<2;++i)
+		buffer[i]=0;
+}
+int convert(int* a)
+{
+	int temp=0;
+	for(int i=0;i<2;++i)
+		temp+=a[i]*pow(10,i);
+	return temp;
+}
+void print(int* a)
+{
+	for(int i=0;i<2;++i)
+		printf(" %d ",a[i]);
+	printf("\n");
+}
+void read_from_file()
+{
+	
+	ifstream ifs("elementary_data.txt", ios::in);
+	if(!ifs)
+	{
+		printf("Unable to open file\n");
+		return;
+	}
+	char c;
+	main_object temp_data;
+	
+	ifs.seekg(0,ios_base::end);
+	bool con = ifs.tellg();
+	ifs.seekg(0,ios::beg);
+	while(!ifs.eof() && con)
+	{
+		elementary_brick temp_elem;
+		for(int i=0;i<3;++i)
+		{
+			ifs>>temp_elem.point[i];
+			printf("temp_elem : %lf\n",temp_elem.point[i]);
+		}
+		for(int i=0;i<16;++i)
+		{
+			ifs>>temp_elem.prevMatrix[i];//=temp;
+			printf("prev_elem : %lf\n",temp_elem.prevMatrix[i]);
+
+		}
+		ifs>>temp_elem.length;
+		printf("inetger read : %d\n",temp_elem.length);
+		ifs>>temp_elem.colour;
+		printf("colour read : %d\n",temp_elem.colour);
+
+		temp_data.elementary_brick_list.push_back(temp_elem);
+		// //ifs>>c;
+	}
+	ifs.close();
+	// return;
+	ifs.open("sloping_data.txt",ios::in);
+	if(!ifs)
+	{
+		printf("Unable to open file\n");
+		return;
+	}
+	ifs.seekg(0,ios_base::end);
+	con = ifs.tellg();
+	ifs.seekg(0,ios::beg);
+	while(!ifs.eof() && con)
+	{	
+		sloping_brick temp_slop;
+	
+		for(int i=0;i<3;++i)
+		{
+			ifs>>temp_slop.point[i];
+			printf("temp_elem1 : %lf\n",temp_slop.point[i]);
+		}
+		for(int i=0;i<16;++i)
+		{
+			ifs>>temp_slop.prevMatrix[i];//=temp;
+			printf("prev_elem1 : %lf\n",temp_slop.prevMatrix[i]);
+
+		}
+		ifs>>temp_slop.length;
+		printf("inetger read1 : %d\n",temp_slop.length);
+		ifs>>temp_slop.colour;
+		temp_data.sloping_brick_list.push_back(temp_slop);
+		//ifs>>c;
+	}
+	ifs.close();
+	ifs.open("base_data.txt",ios::in);
+	if(!ifs)
+	{
+		printf("Unable to open file\n");
+		return;
+	}
+	ifs.seekg(0,ios_base::end);
+	con = ifs.tellg();
+	ifs.seekg(0,ios::beg);
+	while(!ifs.eof() && con)
+	{
+		base_plate temp_base;
+	
+		for(int i=0;i<3;++i)
+		{
+			ifs>>temp_base.point[i];
+			printf("temp_base : %lf\n",temp_base.point[i]);
+		}
+		for(int i=0;i<16;++i)
+		{
+			ifs>>temp_base.prevMatrix[i];//=temp;
+			printf("prev_base : %lf\n",temp_base.prevMatrix[i]);
+
+		}
+		ifs>>temp_base.length;
+		printf("integer read : %d\n",temp_base.length);
+		ifs>>temp_base.colour;
+		temp_data.base_plate_list.push_back(temp_base);
+		//ifs>>c;
+	}
+	ifs.close();
+
+	ifs.open("window_data.txt",ios::in);
+	if(!ifs)
+	{
+		printf("Unable to open file\n");
+		return;
+	}
+	ifs.seekg(0,ios_base::end);
+	con = ifs.tellg();
+	ifs.seekg(0,ios::beg);
+	while(!ifs.eof() && con)
+	{
+		window temp_window;
+		for(int i=0;i<3;++i)
+		{
+			ifs>>temp_window.point[i];
+			printf("temp_window : %lf\n",temp_window.point[i]);
+		}
+		for(int i=0;i<16;++i)
+		{
+			ifs>>temp_window.prevMatrix[i];//=temp;
+			printf("prev_window : %lf\n",temp_window.prevMatrix[i]);
+
+		}
+		// ifs>>temp_base.length;
+		// printf("integer read : %d\n",temp_base.length);
+		ifs>>temp_window.colour;
+		temp_data.window_list.push_back(temp_window);
+		//ifs>>c;
+	}
+	ifs.close();
+
+
+	ifs.open("fence_data.txt",ios::in);
+	if(!ifs)
+	{
+		printf("Unable to open file\n");
+		return;
+	}
+	ifs.seekg(0,ios_base::end);
+	con = ifs.tellg();
+	ifs.seekg(0,ios::beg);
+	while(!ifs.eof() && con)
+	{
+		
+		fence temp_fence;
+		for(int i=0;i<3;++i)
+		{
+			ifs>>temp_fence.point[i];
+			printf("temp_fence : %lf\n",temp_fence.point[i]);
+		}
+		for(int i=0;i<16;++i)
+		{
+			ifs>>temp_fence.prevMatrix[i];//=temp;
+			printf("prev_window : %lf\n",temp_fence.prevMatrix[i]);
+
+		}
+		ifs>>temp_fence.length;
+		ifs>>temp_fence.colour;
+		// printf("integer read : %d\n",temp_base.length);
+		temp_data.fence_list.push_back(temp_fence);
+		// //ifs>>c;
+	}
+	ifs.close();
+	if(!temp_data.elementary_brick_list.empty())
+		temp_data.elementary_brick_list.pop_back();
+	if(!temp_data.sloping_brick_list.empty())
+		temp_data.sloping_brick_list.pop_back();
+	if(!temp_data.base_plate_list.empty())
+		temp_data.base_plate_list.pop_back();
+	if(!temp_data.fence_list.empty())
+		temp_data.fence_list.pop_back();
+	if(!temp_data.window_list.empty())
+	temp_data.window_list.pop_back();
+
+	data =temp_data;
+
+}
+void save_to_file()
+{
+	main_object temp_data;
+	temp_data=data;
+	ofstream ofs("elementary_data.txt", ios::out );
+	if(!ofs)
+	{
+		printf("Unable to open file\n");
+		return;
+	}
+	std::list<elementary_brick>::iterator it;
+	for(it=temp_data.elementary_brick_list.begin();it!=temp_data.elementary_brick_list.end();++it)
+	{
+		for(int i=0;i<3;++i)
+		{
+			ofs<<it->point[i];
+			printf("writing point[%d] : %lf\n",i,it->point[i]);
+			// ofs.write((char*)&(it->point[i]),sizeof(GLfloat));
+			ofs<<" ";
+		}	
+		for(int i=0;i<16;++i)
+		{
+			printf("writing point[%d] : %lf\n",i,it->prevMatrix[i]);
+
+			ofs<<it->prevMatrix[i]<<" ";
+		}
+		ofs<<it->length;
+		ofs<<" ";
+		printf("length : %d\n",it->length);
+
+		ofs<<it->colour<<" ";
+		printf("colour : %d\n",it->colour);
+
+	}
+	ofs.close();
+	// return;
+	ofs.open("sloping_data.txt", ios::out );
+	if(!ofs)
+	{
+		printf("Unable to open file\n");
+		return;
+	}
+	std::list<sloping_brick>::iterator it1;
+	for(it1=temp_data.sloping_brick_list.begin();it1!=temp_data.sloping_brick_list.end();++it1)
+	{
+		for(int i=0;i<3;++i)
+		{
+			ofs<<it1->point[i];
+			// ofs.write((char*)&(it1->point[i]),sizeof(GLfloat));
+			ofs<<" ";
+		}	
+		for(int i=0;i<16;++i)
+		{
+			ofs<<it1->prevMatrix[i]<<" ";
+			// ofs.write((char*)&(it1->point[i]),sizeof(GLfloat));
+			ofs<<" ";
+		}
+		ofs<<it1->length;
+		// ofs.write((char*)&(it1->length),sizeof(GLfloat));
+		ofs<<" ";
+		ofs<<it1->type;
+		// ofs.write((char*)&(it1->type),sizeof(GLfloat));
+		ofs<<" ";
+		ofs<<it1->colour<<" ";
+
+		// ofs.write((char *)&data, sizeof(data));
+	}
+	ofs.close();
+	ofs.open("base_data.txt", ios::out );
+	if(!ofs)
+	{
+		printf("Unable to open file\n");
+		return;
+	}
+	std::list<base_plate>::iterator it2;
+	for(it2=temp_data.base_plate_list.begin();it2!=temp_data.base_plate_list.end();++it2)
+	{
+		for(int i=0;i<3;++i)
+		{
+			ofs<<it2->point[i];
+			// ofs.write((char*)&(it1->point[i]),sizeof(GLfloat));
+			ofs<<" ";
+		}	
+		for(int i=0;i<16;++i)
+		{
+			ofs<<it2->prevMatrix[i]<<" ";
+			// ofs.write((char*)&(it1->point[i]),sizeof(GLfloat));
+			ofs<<" ";
+		}
+		ofs<<it2->length;
+		ofs<<" ";
+		ofs<<it2->colour<<" ";
+
+
+	}
+	ofs.close();
+	ofs.open("window_data.txt", ios::out );
+	if(!ofs)
+	{
+		printf("Unable to open file\n");
+		return;
+	}
+	std::list<window>::iterator win_it;
+	for(win_it=temp_data.window_list.begin();win_it!=temp_data.window_list.end();++win_it)
+	{
+		for(int i=0;i<3;++i)
+		{
+			ofs<<win_it->point[i];
+			// ofs.write((char*)&(it1->point[i]),sizeof(GLfloat));
+			ofs<<" ";
+		}	
+		for(int i=0;i<16;++i)
+		{
+			ofs<<win_it->prevMatrix[i]<<" ";
+			// ofs.write((char*)&(it1->point[i]),sizeof(GLfloat));
+			ofs<<" ";
+		}
+		ofs<<win_it->colour<<" ";
+
+		// ofs<<it2->length;
+		// ofs<<" ";
+
+	}
+	ofs.close();
+	ofs.open("fence_data.txt", ios::out );
+	if(!ofs)
+	{
+		printf("Unable to open file\n");
+		return;
+	}
+	std::list<fence>::iterator fen_it;
+	for(fen_it=temp_data.fence_list.begin();fen_it!=temp_data.fence_list.end();++fen_it)
+	{
+		for(int i=0;i<3;++i)
+		{
+			ofs<<fen_it->point[i];
+			// ofs.write((char*)&(it1->point[i]),sizeof(GLfloat));
+			ofs<<" ";
+		}	
+		for(int i=0;i<16;++i)
+		{
+			ofs<<fen_it->prevMatrix[i]<<" ";
+			// ofs.write((char*)&(it1->point[i]),sizeof(GLfloat));
+			ofs<<" ";
+		}
+		ofs<<fen_it->length<<" ";
+		// ofs<<" ";
+		ofs<<fen_it->colour<<" ";
+
+
+	}
+	ofs.close();
+
+}
+
+void init(char **argv)
+{
+	
+	// glClearColor(1.0,1.0,1.0,0.0);
+
+	//Comment this after testing
+	/*glViewport( 0, 0, win_width, win_height );
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW); 
+	glLoadIdentity();*/
+	// glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+
+	set_lights(); //in utility.h
+	if(strcmp("water",argv[1])==0)
+	{
+	    shader.init("sil.vert", "sil.frag");
+	    // shader.init("forum.vert", "forum.frag");
+	    shader1.init("fbo3.vert", "fbo3.frag");
+	    // shader.init("v1.vert", "v1.frag");
+	}
+	else if(strcmp("toon",argv[1])==0)
+	{
+ 	    shader.init("sil.vert", "sil.frag");
+	    // shader.init("forum.vert", "forum.frag");
+	    shader1.init("fbo3.vert", "sil_copy.frag");
+	}
+	else if(strcmp("technical",argv[1])==0)
+	{
+// 	    shader.init("sil.vert", "sil.frag");
+	    shader.init("forum.vert", "forum.frag");
+	    shader1.init("fbo3.vert", "forum_fbo.frag");
+	}
+	else if(strcmp("oil",argv[1])==0)
+	{
+ 	    shader.init("sil.vert", "sil.frag");
+	   // shader.init("sil.vert", "oil.frag");
+	    shader1.init("fbo3.vert", "oil.frag");
+	}
+	else if(strcmp("water_technical",argv[1])==0)
+	{
+	   shader.init("forum.vert", "forum.frag");
+	   // shader.init("sil.vert", "oil.frag");
+	    shader1.init("fbo3.vert", "fbo3.frag");
+	}
+	else if(strcmp("pixelate",argv[1])==0)
+	{
+	   shader.init("forum.vert", "forum.frag");
+	   // shader.init("sil.vert", "oil.frag");
+	    shader1.init("fbo3.vert", "pixelate.frag");
+	}
+	else
+	{
+//	   shader.init("forum.vert", "forum.frag");
+	   shader.init("sil.vert", "sil.frag");
+	   shader1.init("fbo3.vert", "fbo3.frag");
+	}
+
+
+		
+	// glOrtho(0.0, (float) win_width, 0.0, (float) win_height, -1000.0, 1000.0);
+}
+void setEye()
+{
+    glRotatef(rotate_x,1,0,0);
+    glRotatef(rotate_y,0,1,0);
+}
+
+void reshape (int w, int h)	
+{
+   /*win_height =h;
+   win_width =w;*/
+   /*glViewport (0, 0, (GLsizei) w, (GLsizei) h); 
+   glMatrixMode (GL_PROJECTION);
+   glLoadIdentity ();
+   glFrustum (-1.0, 1.0, -1.0, 1.0, 1.5, 20.0);
+   // glFrustum (-1.0, 1.0, -1.0, 1.0, 0.0, 20.0);
+   glMatrixMode (GL_MODELVIEW);*/
+   glViewport (0, 0, (GLsizei)w, (GLsizei)h);
+	glMatrixMode (GL_PROJECTION);
+	glLoadIdentity ();
+	gluPerspective (60, (GLfloat)w / (GLfloat)h, 1.0, 100.0);
+	glMatrixMode (GL_MODELVIEW);
+   // glMatrixMode(GL_MODELVIEW);
+   // glLoadIdentity();
+}
+void gen_frame_buffer()
+{
+
+	// The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
+	GLuint FramebufferName = 0;
+	glGenFramebuffers(1, &FramebufferName);
+	glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
+	// The texture we're going to render to
+	GLuint renderedTexture;
+	glGenTextures(1, &renderedTexture);
+	// "Bind" the newly created texture : all future texture functions will modify this texture
+	glActiveTexture(GL_TEXTURE0);
+	// glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, renderedTexture);
+	// Give an empty image to OpenGL ( the last "0" )
+	glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, win_height, win_width, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+	// Poor filtering. Needed !
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	// The depth buffer
+	GLuint depthrenderbuffer;
+	glGenRenderbuffers(1, &depthrenderbuffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, win_height, win_width);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+
+	// Set "renderedTexture" as our colour attachement #0
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTexture, 0);
+	// Set the list of draw buffers.
+	GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+	glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+
+	// Always check that our framebuffer is ok
+	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			printf("Problem with framebuffer\n");
+	// Render to our framebuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
+    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// glViewport(0,0,1024,768); // Render on the whole framebuffer, complete from the lower left corner to the upper right
+}
+void display(void)
+{
+	glClear (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+	// glEnable(GL_COLOR_MATERIAL);
+	glClearColor(1,1,1,0);
+	glDisable(GL_LIGHTING);
+
+	glLoadIdentity();
+	
+	gluLookAt (5.0*zoom_level, 5.0*zoom_level, 5.0*zoom_level, 0.0, 0.0, 0.0, -0.5,0.707106781, -0.5);
+	setEye();	
+	gen_frame_buffer();
+    shader.bind();
+   
+	glScalef(0.25,0.25,0.25);
+	GLfloat matrix[16]; 
+	glGetFloatv (GL_MODELVIEW_MATRIX, matrix);
+   
+	// glColor3f( 0.0, 0.5, 0.5 );  
+	
+	// glutSolidTeapot(2);
+
+	data.elementary_list_draw(matrix);   
+	data.sloping_list_draw(matrix);
+	data.base_plate_draw(matrix);
+	data.window_draw(matrix);
+	data.fence_draw(matrix);
+	// screenshot("scrennshot.tga",win_height,win_width);
+
+	shader.unbind();	
+	// glClear (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+	// glBindTexture(GL_TEXTURE_2D,0);
+
+	glLoadIdentity();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	GLint x = load_bmp("paper1.bmp",1);
+	x = load_bmp("fine_noise.bmp",2);
+	x = load_bmp("hatch.bmp",3);
+	// GLint z =load_bmp("test.bmp",0);
+    // shader.init("fbo3.vert", "fbo3.frag",locations1);
+	// shader.init("fbo3.vert","fbo3.frag");
+	shader1.bind();
+	GLuint t1Location = glGetUniformLocation(shader1.id(), "texUnit");
+	GLuint t2Location = glGetUniformLocation(shader1.id(), "paperTex");
+	GLuint t3Location = glGetUniformLocation(shader1.id(), "perlinTex");
+	GLuint t4Location = glGetUniformLocation(shader1.id(), "hatchTex");
+
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(t1Location, 0);
+	glActiveTexture(GL_TEXTURE0+1);
+	glUniform1i(t2Location, 1);
+	glActiveTexture(GL_TEXTURE0+2);
+	glUniform1i(t3Location, 2);
+	glActiveTexture(GL_TEXTURE0+3);
+	glUniform1i(t4Location, 3);
+	
+	// glColor3f( 0.0, 0.5, 0.5 );  
+
+	glutSolidTeapot(2);
+
+
+    shader1.unbind();
+	
+	
+	
+	glFlush();
+		
+	glutSwapBuffers();
+}
+
+void menu(GLint selectedOption)
+{
+	GLfloat p[3];
+	printf("mouse_x : %d  mouse_y : %d z: %d\n",mouse_x,mouse_y,mouse_z );
+	// p[0]=worldX;p[1]=worldY;p[2]=worldZ;
+	p[0]=mouse_x;p[1]=mouse_y;p[2]=mouse_z;
+	// p[0]=0;p[1]=0;p[2]=0;
+	// setEye();
+	GLfloat matrix[16]; 
+	glGetFloatv (GL_MODELVIEW_MATRIX, matrix);
+	
+	if(selectedOption>=2&&selectedOption<=8)
+	{
+		/*
+		GLint viewport[4]; //var to hold the viewport info
+        GLdouble modelview[16]; //var to hold the modelview info
+        GLdouble projection[16]; //var to hold the projection matrix info
+        GLfloat winX, winY, winZ; //variables to hold screen x,y,z coordinates
+        GLdouble worldX, worldY, worldZ; //variables to hold world x,y,z coordinates
+ 
+        glGetDoublev( GL_MODELVIEW_MATRIX, modelview ); //get the modelview info
+        glGetDoublev( GL_PROJECTION_MATRIX, projection ); //get the projection matrix info
+        glGetIntegerv( GL_VIEWPORT, viewport ); //get the viewport info
+ 
+		winX = (float)mouse_x;
+        winY = (float)viewport[3] - (float)mouse_y;
+		winZ = 0;
+ 
+		//get the world coordinates from the screen coordinates
+        gluUnProject( winX, winY, winZ, modelview, projection, viewport, &worldX, &worldY, &worldZ);
+   */
+		
+		data.add_elementary_brick(p,selectedOption,matrix,color_option);
+		// is_rotating=1;
+		// data.add_sloping_brick(p,selectedOption,matrix,2);
+	}	
+	else if(selectedOption>=9 && selectedOption<=15)
+	{
+		data.add_sloping_brick(p,selectedOption-7,matrix,2,color_option);
+
+		// is_rotating=2;
+	}
+	else if(selectedOption>=16 && selectedOption <=20)
+	{
+		data.add_base_plate(p,selectedOption-12,matrix,color_option);
+		// is_rotating=3;
+	}
+	else if(selectedOption==21)
+	{
+		data.add_window(p,matrix,color_option);
+		// is_rotating=4;
+	}
+	else if(selectedOption>=22&& selectedOption<=26)
+	{
+		data.add_fence(p,selectedOption-18,matrix,color_option);
+		// is_rotating=5;
+	}
+	glutPostRedisplay();
+}
+
+void specialKeys( int key, int x, int y ) 
+{
+ 
+  if (key == GLUT_KEY_RIGHT)
+    rotate_y += 5;
+  else if (key == GLUT_KEY_LEFT)
+    rotate_y -= 5;
+  else if (key == GLUT_KEY_UP)
+    rotate_x += 5;
+  else if (key == GLUT_KEY_DOWN)
+    rotate_x -= 5;
+  glutPostRedisplay();
+ 
+}
+
+void keyboard(unsigned char key,int x,int y)
+{
+
+	printf("Key pressed : %d\n",key);
+
+	if(key ==13)
+	{
+		// is_rotating=-1; 
+
+		if(flag_z)
+		{
+			print(buffer);
+			flag_z=0;
+			mouse_z = neg*convert(buffer);
+		}
+		else if(flag_x)
+		{
+			print(buffer);
+			flag_x=0;
+			mouse_x = neg*convert(buffer);
+		}
+		else if(flag_y)
+		{
+			print(buffer);
+			flag_y=0;
+			mouse_y = 2*neg*convert(buffer);
+		}
+		counter=0;
+		neg=1;	
+		reset_buffer();
+	}
+
+
+
+	if(flag_z || flag_x || flag_y)
+	{
+		if(key==45)
+			neg=-1;
+		else
+		{
+			counter = counter%2;
+			buffer[counter]=key-48;
+			counter++;
+		}
+	}
+	
+
+	if(key == 'z')
+	{
+		flag_z=1;
+		printf("Ready for input, press the z dimension\n");//<<endl;
+
+	}
+	else if(key=='x')
+	{
+		flag_x=1;
+		printf("Ready for input, press the x dimension\n");//<<endl;
+	}
+	else if(key=='y')
+	{
+		flag_y=1;
+		printf("Ready for input, press the y dimension\n");//<<endl;
+	}
+	else if(key=='s')
+	{
+		save_to_file();
+		printf("Saved to file!\n");
+	}
+	else if(key=='l')
+	{
+		printf("Reading from file!\n");
+		read_from_file();
+
+	}
+	else if(key=='r')
+	{
+		printf("Colour changed to Red\n");
+		color_option=2;
+
+	}	
+	else if(key=='g')
+	{
+		printf("Colour changed to Green\n");
+		color_option=1;
+	}
+	else if(key=='b')
+	{
+		printf("Colour changed to Blue\n");
+		color_option=0;
+	}
+	else if(key=='j')
+	{
+		printf("Colour changed to Yellow\n");
+		color_option=3;
+	}
+
+	else if(key==56  && !flag_y && !flag_x && !flag_z)
+		zoom_level+=0.25;
+	else if(key == 50 && !flag_y && !flag_x && !flag_z)
+		zoom_level-=0.25;
+	else if(key=='t')
+		mode=!mode;
+	else if(key=='o')
+		screen_shot=true;
+	
+	/*	else if(key=='r' && is_rotating!=-1)
+				rotate_y+=90;
+	*/	
+	glutPostRedisplay();
+
+}
+/*void mouse_pos(int x, int y)
+{
+	mouse_x = x;//(float) win_width;
+	mouse_y = y;//(float) win_height;
+}*/
+
+int main(int argc, char** argv)
+{
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+
+	glutInitWindowSize (win_height, win_width); 
+	glutInitWindowPosition (0,0);
+	
+	glutCreateWindow ("LeGO");
+	GLenum err = glewInit();
+	init(argv);
+	if(!flag_z && !flag_x && !flag_y)
+		reset_buffer();
+	// glClearColor(1.0,1.0,1.0,0.0);
+	glutDisplayFunc(display);
+	glutReshapeFunc(reshape);  //Uncomment this after testing
+	glutKeyboardFunc(keyboard);
+	glutSpecialFunc(specialKeys);
+	
+	// glutPassiveMotionFunc(mouse_pos);
+	// glutMouseFunc(mouse);
+
+	int submenu = glutCreateMenu(menu);
+		glutAddMenuEntry("2x2",2);
+		glutAddMenuEntry("3x2",3);
+		glutAddMenuEntry("4x2",4);
+		glutAddMenuEntry("5x2",5);
+		glutAddMenuEntry("6x2",6);
+		glutAddMenuEntry("7x2",7);
+		glutAddMenuEntry("8x2",8);
+	int submenu2 = glutCreateMenu(menu);
+		glutAddMenuEntry("2x2",9);
+		glutAddMenuEntry("3x2",10);
+		glutAddMenuEntry("4x2",11);
+		glutAddMenuEntry("5x2",12);
+		glutAddMenuEntry("6x2",13);
+		glutAddMenuEntry("7x2",14);
+		glutAddMenuEntry("8x2",15);
+	int submenu3=glutCreateMenu(menu);
+		glutAddMenuEntry("4x4",16);
+		glutAddMenuEntry("5x5",17);
+		glutAddMenuEntry("6x6",18);
+		glutAddMenuEntry("7x7",19);
+		glutAddMenuEntry("8x8",20);
+/*	int submenu4=glutCreateMenu(menu);
+		glutAddMenuEntry("2x4",22);
+		glutAddMenuEntry("2x5",23);
+		glutAddMenuEntry("2x6",24);
+		glutAddMenuEntry("2x7",25);
+		glutAddMenuEntry("2x8",26);
+*/
+	int main_menu=glutCreateMenu(menu);
+		// glutAddMenuEntry("Normal Brick" ,1);
+
+	glutAddSubMenu("Normal Brick",submenu);		
+	glutAddSubMenu("Sloping Brick",submenu2);
+	glutAddSubMenu("Base Plate",submenu3);
+
+	glutAddMenuEntry("Window" ,21);
+	// glutAddSubMenu("Fence",submenu4);
+	// glutAddMenuEntry("Fence" ,22);
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+	
+	glutMainLoop();
+	return 0;
+}

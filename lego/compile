@@ -1,0 +1,1 @@
+g++ -o run -O3 shader.cpp fence.cpp circular_stick.cpp window.cpp base_plate.cpp load_bmp.cpp sloping_brick.cpp slope.cpp main_object.cpp utility.cpp lower_cylinder.cpp file.cpp elementary_brick.cpp boundary.cpp small_brick.cpp test.cpp upper_cylinder.cpp -lX11 -lGL -lGLU -lglut -lGLEW
